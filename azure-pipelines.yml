@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main  
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'Azure for Students'  
+  appName: 'kirtirupanshiwebapp'              # Azure App Service name
+  containerRegistry: 'kirtirupanshi' # Azure Container Registry name
+  imageName: 'kirtirupanshiimage'                  # image name in ACR
+  tag: 'latest'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+          - task: Docker@2
+            displayName: 'Build and push Docker image'
+            inputs:
+              command: 'buildAndPush'
+              containerRegistry: '$(containerRegistry)'
+              repository: '$(imageName)'
+              tags: |
+                $(tag)
+
+  - stage: Deploy
+    jobs:
+      - job: Deploy
+        steps:
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy to Azure App Service'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(appName)'
+              containerName: '$(containerRegistry)/$(imageName):$(tag)'
